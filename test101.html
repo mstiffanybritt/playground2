@@ -22,12 +22,52 @@
       margin: 0;
       color: #555;
     }
+
+
+    form {
+  margin-top: 2rem;
+}
+
+input, textarea {
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  width: 100%;
+  max-width: 400px;
+  font-size: 16px;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  font-weight: bold;
+  background-color: #444;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
   </style>
 </head>
 <body>
 
   <h1>📝 All Notes</h1>
   <div id="notes-container">Loading...</div>
+
+<h2>Add a New Note</h2>
+<form id="note-form">
+  <input type="text" id="title" placeholder="Title" required />
+  <br />
+  <textarea id="description" placeholder="Description" required></textarea>
+  <br />
+  <button type="submit">Add Note</button>
+</form>
+
+<p id="status-message"></p>
+
+
+
+
+
+  
 
   <script type="module">
     const SUPABASE_URL = 'https://scdaixgfbmyzbatunckw.supabase.co'; // ← Replace
@@ -60,6 +100,37 @@
     }
 
     loadNotes();
+
+
+
+
+
+    const form = document.getElementById('note-form');
+const statusMessage = document.getElementById('status-message');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault(); // stop the page from reloading
+
+  const title = document.getElementById('title').value.trim();
+  const description = document.getElementById('description').value.trim();
+
+  const { data, error } = await supabase
+    .from('notes')
+    .insert([{ title, description }]);
+
+  if (error) {
+    statusMessage.textContent = 'Error adding note.';
+    console.error(error);
+  } else {
+    statusMessage.textContent = 'Note added!';
+    form.reset();
+    fetchNotes(); // refresh the list
+  }
+});
+
+
+
+    
   </script>
 
 </body>
