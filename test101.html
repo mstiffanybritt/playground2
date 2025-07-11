@@ -123,8 +123,21 @@ form.addEventListener('submit', async (e) => {
     console.error(error);
   } else {
     statusMessage.textContent = 'Note added!';
+
+
+    
     form.reset();
-    fetchNotes(); // refresh the list
+
+// Create and insert the new note into the DOM immediately
+const newNoteDiv = document.createElement('div');
+newNoteDiv.className = 'note';
+newNoteDiv.innerHTML = `<h2>${title}</h2><p>${description}</p>`;
+
+// Insert at the top of the notes list
+const container = document.getElementById('notes-container');
+container.prepend(newNoteDiv);
+
+    
   }
 });
 
