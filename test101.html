@@ -1,16 +1,66 @@
+<!DOCTYPE html>
 <html>
- <head>
+<head>
+  <title>My Supabase Notes</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f9f9f9;
+      padding: 40px;
+    }
+    .note {
+      background: white;
+      border-radius: 6px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .note h2 {
+      margin: 0 0 8px;
+    }
+    .note p {
+      margin: 0;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
 
- <style>
+  <h1>📝 All Notes</h1>
+  <div id="notes-container">Loading...</div>
 
-  body {background-color: #f4f4f4;}
-  p {font-size: 32px; line-height:1.2em;} 
-  
- </style> 
- </head> 
-  <body>
-   <div style="width: 300px;"
-    <p>This is a sentence. And this is another one</p>
-   </div>
-  </body>
+  <script type="module">
+    const SUPABASE_URL = 'https://scdaixgfbmyzbatunckw.supabase.co'; // ← Replace
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjZGFpeGdmYm15emJhdHVuY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIyNzI1NDUsImV4cCI6MjA2Nzg0ODU0NX0.3hysiofYO9B-LD2lMfTQbA1D2c7TU6jBzPYRju1MdqY'; // ← Replace
+
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function loadNotes() {
+      const { data, error } = await supabase
+        .from('notes')
+        .select('title, description')
+        .order('id', { ascending: false });
+
+      const container = document.getElementById('notes-container');
+      container.innerHTML = '';
+
+      if (error) {
+        container.innerHTML = `<p>Error loading notes: ${error.message}</p>`;
+        return;
+      }
+
+      data.forEach(note => {
+        const div = document.createElement('div');
+        div.className = 'note';
+        div.innerHTML = `<h2>${note.title}</h2><p>${note.description}</p>`;
+        container.appendChild(div);
+      });
+    }
+
+    loadNotes();
+  </script>
+
+</body>
 </html>
