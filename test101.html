@@ -22,72 +22,69 @@
       margin: 0;
       color: #555;
     }
-
+    .note button {
+      margin-right: 10px;
+    }
 
     form {
-  margin-top: 2rem;
-}
-
-input, textarea {
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
-  width: 100%;
-  max-width: 400px;
-  font-size: 16px;
-}
-
-button {
-  padding: 0.5rem 1rem;
-  font-weight: bold;
-  background-color: #444;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-}
-
+      margin-top: 2rem;
+    }
+    input, textarea {
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      width: 100%;
+      max-width: 400px;
+      font-size: 16px;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      background-color: #444;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
+  <h2>Add or Edit Note</h2>
+  <form id="note-form">
+    <input type="text" id="title" placeholder="Title" required />
+    <br />
+    <textarea id="description" placeholder="Description" required></textarea>
+    <br />
+    <input type="hidden" id="note-id" />
+    <button type="submit">Save Note</button>
+  </form>
 
-
- <h2>Add a New Note</h2>
-<form id="note-form">
-  <input type="text" id="title" placeholder="Title" required />
-  <br />
-  <textarea id="description" placeholder="Description" required></textarea>
-  <br />
-  <button type="submit">Add Note</button>
-</form>
-
-<p id="status-message"></p> 
+  <p id="status-message"></p> 
 
   <h1>📝 See All Notes</h1>
   <div id="notes-container">Loading...</div>
 
-
-
-
-
-
-
-  
-
   <script type="module">
-    const SUPABASE_URL = 'https://scdaixgfbmyzbatunckw.supabase.co'; // ← Replace
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjZGFpeGdmYm15emJhdHVuY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIyNzI1NDUsImV4cCI6MjA2Nzg0ODU0NX0.3hysiofYO9B-LD2lMfTQbA1D2c7TU6jBzPYRju1MdqY'; // ← Replace
-
+    const SUPABASE_URL = 'https://scdaixgfbmyzbatunckw.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjZGFpeGdmYm15emJhdHVuY2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIyNzI1NDUsImV4cCI6MjA2Nzg0ODU0NX0.3hysiofYO9B-LD2lMfTQbA1D2c7TU6jBzPYRju1MdqY'; // ← Replace    
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
+    
+
+    const form = document.getElementById('note-form');
+    const statusMessage = document.getElementById('status-message');
+    const titleInput = document.getElementById('title');
+    const descInput = document.getElementById('description');
+    const noteIdInput = document.getElementById('note-id');
+    const container = document.getElementById('notes-container');
 
     async function loadNotes() {
       const { data, error } = await supabase
         .from('notes')
-        .select('title, description')
+        .select('*')
         .order('id', { ascending: false });
 
-      const container = document.getElementById('notes-container');
       container.innerHTML = '';
 
       if (error) {
@@ -98,65 +95,78 @@ button {
       data.forEach(note => {
         const div = document.createElement('div');
         div.className = 'note';
-        div.innerHTML = `<h2>${note.title}</h2><p>${note.description}</p>`;
+        div.innerHTML = `
+          <h2>${note.title}</h2>
+          <p>${note.description}</p>
+          <button class="edit-btn" data-id="${note.id}" data-title="${note.title}" data-description="${note.description}">Edit</button>
+          <button class="delete-btn" data-id="${note.id}">Delete</button>
+        `;
         container.appendChild(div);
       });
     }
 
     loadNotes();
 
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = titleInput.value.trim();
+      const description = descInput.value.trim();
+      const noteId = noteIdInput.value;
 
+      let result;
 
+      if (noteId) {
+        // Edit mode
+        result = await supabase
+          .from('notes')
+          .update({ title, description })
+          .eq('id', noteId);
+        statusMessage.textContent = 'Note updated!';
+      } else {
+        // New note
+        result = await supabase
+          .from('notes')
+          .insert([{ title, description }]);
+        statusMessage.textContent = 'Note added!';
+      }
 
+      if (result.error) {
+        statusMessage.textContent = 'Error saving note.';
+        console.error(result.error);
+      } else {
+        form.reset();
+        noteIdInput.value = '';
+        loadNotes();
+      }
+    });
 
-    const form = document.getElementById('note-form');
-const statusMessage = document.getElementById('status-message');
+    // Handle edit and delete
+    document.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('delete-btn')) {
+        const id = e.target.getAttribute('data-id');
+        const { error } = await supabase.from('notes').delete().eq('id', id);
+        if (error) {
+          alert('Error deleting note');
+          console.error(error);
+        } else {
+          e.target.parentElement.remove();
+        }
+      }
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault(); // stop the page from reloading
+      if (e.target.classList.contains('edit-btn')) {
+        const title = e.target.getAttribute('data-title');
+        const description = e.target.getAttribute('data-description');
+        const id = e.target.getAttribute('data-id');
 
-  const title = document.getElementById('title').value.trim();
-  const description = document.getElementById('description').value.trim();
-
-  const { data, error } = await supabase
-    .from('notes')
-    .insert([{ title, description }]);
-
-  if (error) {
-    statusMessage.textContent = 'Error adding note.';
-    console.error(error);
-  } else {
-    statusMessage.textContent = 'Note added!';
-
-
-    
-
-
-
-
-    form.reset();
-
-// Create a new DOM element for the note
-const newNoteDiv = document.createElement('div');
-newNoteDiv.className = 'note';
-newNoteDiv.innerHTML = `
-  <h2>${title}</h2>
-  <p>${description}</p>
-`;
-
-// Add the new note to the top of the list
-const container = document.getElementById('notes-container');
-container.prepend(newNoteDiv);
-
-
-    
-  }
-});
-
-
-
-    
+        titleInput.value = title;
+        descInput.value = description;
+        noteIdInput.value = id;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
   </script>
-
 </body>
 </html>
+
+
+
