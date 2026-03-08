@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5ede4;
+    --surface: #faf6f1;
+    --border: #e8ddd4;
+    --text-primary: #2d2520;
+    --text-secondary: #8c7b72;
+    --text-muted: #b5a99f;
+    --accent: #c4956a;
+    --accent-light: #f0e4d7;
+    --today-bg: #c4956a;
+    --today-text: #fff;
+    --sunday: #c47a6a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .calendar {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 2rem;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 4px 24px rgba(100, 70, 50, 0.08);
+  }
+
+  .calendar-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 1.75rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .month-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+
+  .year {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 300;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 0.5rem;
+  }
+
+  .weekday {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0.4rem 0;
+  }
+
+  .weekday:first-child { color: var(--sunday); }
+
+  .days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+
+  .day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: var(--text-primary);
+    cursor: default;
+    transition: background 0.15s ease;
+    position: relative;
+  }
+
+  .day.empty { pointer-events: none; }
+
+  .day.sunday { color: var(--sunday); }
+
+  .day.today {
+    background: var(--today-bg);
+    color: var(--today-text);
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(196, 149, 106, 0.35);
+  }
+
+  .day.other-month {
+    color: var(--text-muted);
+    opacity: 0.4;
+  }
+
+  .day:not(.empty):not(.today):hover {
+    background: var(--accent-light);
+  }
+
+  .footer {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .today-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .today-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 300;
+  }
+
+  .today-date {
+    font-size: 0.75rem;
+    color: var(--accent);
+    font-weight: 500;
+    margin-left: auto;
+  }
+</style>
+</head>
+<body>
+<div class="calendar">
+  <div class="calendar-header">
+    <div class="month-name" id="monthName"></div>
+    <div class="year" id="yearName"></div>
+  </div>
+  <div class="weekdays">
+    <div class="weekday">Sun</div>
+    <div class="weekday">Mon</div>
+    <div class="weekday">Tue</div>
+    <div class="weekday">Wed</div>
+    <div class="weekday">Thu</div>
+    <div class="weekday">Fri</div>
+    <div class="weekday">Sat</div>
+  </div>
+  <div class="days" id="daysGrid"></div>
+  <div class="footer">
+    <div class="today-dot"></div>
+    <div class="today-label">Today</div>
+    <div class="today-date" id="todayFull"></div>
+  </div>
+</div>
+
+<script>
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const todayDate = now.getDate();
+
+  const months = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  document.getElementById('monthName').textContent = months[month];
+  document.getElementById('yearName').textContent = year;
+  document.getElementById('todayFull').textContent =
+    `${days[now.getDay()]}, ${months[month]} ${todayDate}`;
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const grid = document.getElementById('daysGrid');
+
+  for (let i = 0; i < firstDay; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'day empty';
+    grid.appendChild(empty);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dayEl = document.createElement('div');
+    const dayOfWeek = (firstDay + d - 1) % 7;
+    let cls = 'day';
+    if (d === todayDate) cls += ' today';
+    if (dayOfWeek === 0) cls += ' sunday';
+    dayEl.className = cls;
+    dayEl.textContent = d;
+    grid.appendChild(dayEl);
+  }
+</script>
+</body>
+</html>
